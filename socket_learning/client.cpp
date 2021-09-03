@@ -1,39 +1,39 @@
 #include <iostream>
 #include <unistd.h>
-#include <sys/socket.h>
 #include <cstring>
+#include <sys/socket.h>
 #include <arpa/inet.h>
 
-const unsigned short SER_PORT= 6666;
-#define SER_IP "127.0.0.1"
+#include "wrap.h"
 
-int main(){
-	/*1.建立socket*/
-	int cli_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if(cli_fd == -1){
-		perror("socket error");
-		exit(1);
-	}
-	/*2.connect连接请求*/
-	struct sockaddr_in ser_addr;
-	memset(&ser_addr, 0, sizeof(ser_addr));
-	ser_addr.sin_family = AF_INET;
-	ser_addr.sin_port = htons(SER_PORT);
-	inet_pton(AF_INET, SER_IP, &ser_addr.sin_addr.s_addr);
-	int ret = connect(cli_fd, (struct sockaddr*)&ser_addr, sizeof(ser_addr));
-	if(ret == -1){
-		perror("connect error");
-		exit(1);
-	}
-	/*5.read读数据*/
-	while(1){
-		char buf[1024];
-		std::cin.getline(buf, sizeof(buf));
-		write(cli_fd, buf, strlen(buf));
-		int len = read(cli_fd, buf, sizeof(buf));
-		write(STDOUT_FILENO, buf, len);
-	}
-	close(cli_fd);
+#define SERV_IP "127.0.0.1"
+#define SERV_PORT 6666
 
-	return 0;
+int main(void)
+{
+    struct sockaddr_in serv_addr;
+
+    int sfd = Socket(AF_INET, SOCK_STREAM, 0);
+
+    bzero(&serv_addr, sizeof(serv_addr));                       
+    serv_addr.sin_family = AF_INET;     // 地址族类型                        
+    inet_pton(AF_INET, SERV_IP, &serv_addr.sin_addr.s_addr);    //设置ip
+    serv_addr.sin_port = htons(SERV_PORT);   // 设置端口                   
+
+    Connect(sfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+
+    while (1) {
+		char buf[BUFSIZ]; 
+        fgets(buf, sizeof(buf), stdin);
+        int r = Write(sfd, buf, strlen(buf)); //从标准输入读取数据发送给服务器      
+        printf("Write r ======== %d\n", r);  // 打印发送的数据量
+        int len = Read(sfd, buf, sizeof(buf)); //读取服务器响应的数据
+        printf("Read len ========= %d\n", len); // 打印对方回应的数据量
+        Write(STDOUT_FILENO, buf, len);	//打印到屏幕上
+    }
+
+    Close(sfd);
+
+    return 0;
 }
+

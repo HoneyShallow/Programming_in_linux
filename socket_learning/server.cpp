@@ -1,58 +1,52 @@
 #include <iostream>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <cstring>
 #include <arpa/inet.h>
 
-const unsigned short SER_PORT= 6666;
-#define SER_IP "127.0.0.1"
+#include "wrap.h"
+#define SERV_PORT 6666
 
-int main(){
-	/*1.建立socket*/
-	int ser_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if(ser_fd == -1){
-		perror("socket error");
-		exit(1);
-	}
-	/*2.绑定ip和端口号*/
-	struct sockaddr_in ser_addr;//服务器的地址+端口号
-	//bzero(&ser_addr, sizeof(ser_addr));
-	memset(&ser_addr,0,  sizeof(ser_addr));//将ser_addr处的所有字节填充为'\0'
-	ser_addr.sin_family = AF_INET; // 地址族类型
-	ser_addr.sin_port = htons(SER_PORT); // 端口号htons转变字节序
-	ser_addr.sin_addr.s_addr = htonl(INADDR_ANY); // ip地址
-	int ans = bind(ser_fd, (struct sockaddr*)&ser_addr, sizeof(ser_addr));
-	if(ans == -1){
-		perror("bind error");
-		exit(1);
-	}
-	/*3.listen设置监听*/
-	ans = listen(ser_fd, 128);
-	if(ans == -1){
-		perror("listen error");
-		exit(1);
-	}
-	/*4.accept接受连接请求*/
-	struct sockaddr_in com_addr;
-	socklen_t com_len = sizeof(com_addr);
-	int com_fd = accept(ser_fd, (struct sockaddr*)&com_addr, &com_len);
-	if(com_fd == -1){
-		perror("accept error");
-		exit(1);
-	}
-	char com_IP[BUFSIZ];
-	std::cout << "client ip:" << inet_ntop(AF_INET, &com_addr.sin_addr.s_addr, com_IP, sizeof(com_IP)) << " client port:" << ntohs(com_addr.sin_port) << std::endl;
-	/*5.read读数据*/
-	while(1){
-		char buf[1024];
-		int len = read(com_fd, buf, sizeof(buf));
-		write(STDOUT_FILENO, buf, len);
-		for(int i = 0; i < len; i++)
-			buf[i] = toupper(buf[i]);
-		write(com_fd, buf, len);
-	}
-	close(ser_fd);
-	close(com_fd);
+int main(void)
+{
+    struct sockaddr_in serv_addr;
 
-	return 0;
+    int sfd = Socket(AF_INET, SOCK_STREAM, 0);
+
+    bzero(&serv_addr, sizeof(serv_addr));           
+    serv_addr.sin_family = AF_INET;                 
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY); // 监听本地所有ip
+    serv_addr.sin_port = htons(SERV_PORT);          
+
+    Bind(sfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+
+    Listen(sfd, 2);                                
+
+    printf("wait for client connect ...\n");
+
+	struct sockaddr_in clie_addr;
+    socklen_t clie_addr_len = sizeof(clie_addr_len);
+    int cfd = Accept(sfd, (struct sockaddr *)&clie_addr, &clie_addr_len);
+    printf("cfd = ----%d\n", cfd);
+
+	char clie_IP[BUFSIZ];
+    printf("client IP: %s  port:%d\n", 
+            inet_ntop(AF_INET, &clie_addr.sin_addr.s_addr, clie_IP, sizeof(clie_IP)), 
+            ntohs(clie_addr.sin_port));
+
+    while (1) {
+		char buf[BUFSIZ]; // 读取对方发送的数据并打印到屏幕上
+        int len = Read(cfd, buf, sizeof(buf));
+        Write(STDOUT_FILENO, buf, len);
+
+        for (int i = 0; i < len; i++) // 处理数据
+            buf[i] = toupper(buf[i]);
+        Write(cfd, buf, len);  // 将处理结果回应给客户端
+    }
+
+    Close(sfd);
+    Close(cfd);
+
+    return 0;
 }
