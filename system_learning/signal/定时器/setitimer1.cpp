@@ -5,7 +5,7 @@
 void myfunc(int signo)
 {
 	std::cout << "hello world\n";
-    	//raise(SIGALRM); 
+    //	raise(SIGALRM);//如果这行代码不注释掉，会导致在第一次调用捕捉函数之后递归调用该函数， 
 }
 
 int main(void)

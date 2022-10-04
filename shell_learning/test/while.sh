@@ -1,0 +1,16 @@
+#! /bin/bash
+
+echo "Enter password: "
+read TRY
+while [ "$TRY" != "secret" ]
+do
+	echo "Sorry, try again"
+	read TRY
+done
+
+COUNTER=1
+while [ "$COUNTER" -lt 10 ]
+do
+	echo "Here we go again!"
+	COUNTER=$[$COUNTER+1]
+done

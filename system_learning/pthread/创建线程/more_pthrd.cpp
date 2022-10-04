@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 	}
 	sleep(n);
 	std::cout << std::endl;
-	std::cout << "In thread:thread id = " << pthread_self()
+	std::cout << "In main:thread id = " << pthread_self()
 			<< ",process id = " << getpid() << std::endl;
 	return 0;
 }

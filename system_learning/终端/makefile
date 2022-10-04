@@ -1,12 +1,12 @@
-src = $(wildcard *.c)
-targets = $(patsubst %.c, %, $(src))
+src = $(wildcard *.cpp)
+targets = $(patsubst %.cpp, %, $(src))
 
-CC = gcc
-CFLAGS = -Wall -g
+CC = g++
+CFLAGS = -std=c++11 -Wall -g
 
 all:$(targets)
 
-$(targets):%:%.c
+$(targets):%:%.cpp
 	$(CC) $< -o $@ $(CFLAGS)
 
 .PHONY:clean all
